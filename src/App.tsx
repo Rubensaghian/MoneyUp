@@ -6,6 +6,8 @@ import BudgetPage from './pages/BudgetPage';
 import CashFlowPage from './pages/CashFlowPage';
 import MainPage from './pages/MainPage';
 import TransactionsPage from './pages/TransactionsPage';
+import SignUp from "./pages/SignUp.tsx";
+import Login from "./pages/Login.tsx";
 
 const App: React.FC = () => {
     return (
@@ -18,6 +20,7 @@ const App: React.FC = () => {
             <Link to="/cashflow">Cash Flow</Link>
             <Link to="/transactions">Transactions</Link>
             <Link to="/signup">Sign Up</Link>
+            <Link to="/login">Login</Link>
         </nav>
 
         <Routes>
@@ -26,7 +29,8 @@ const App: React.FC = () => {
             <Route path="/budget" element={<BudgetPage />} />
             <Route path="/cashflow" element={<CashFlowPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/signup" element={<SignUp.tsx />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/login" element={<Login />} />
         </Routes>
 
     </BrowserRouter>
