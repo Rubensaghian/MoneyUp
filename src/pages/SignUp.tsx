@@ -58,13 +58,13 @@ export default function SignUp() {
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-  const [nameError, setNameError] = React.useState(false);
-  const [nameErrorMessage, setNameErrorMessage] = React.useState('');
+  const [userNameError, setUserNameError] = React.useState(false);
+  const [userNameErrorMessage, setUserNameErrorMessage] = React.useState('');
 
   const validateInputs = () => {
     const email = document.getElementById('email') as HTMLInputElement;
     const password = document.getElementById('password') as HTMLInputElement;
-    const name = document.getElementById('name') as HTMLInputElement;
+    const userName = document.getElementById('userName') as HTMLInputElement;
 
     let isValid = true;
 
@@ -86,27 +86,26 @@ export default function SignUp() {
       setPasswordErrorMessage('');
     }
 
-    if (!name.value || name.value.length < 1) {
-      setNameError(true);
-      setNameErrorMessage('Name is required.');
+    if (!userName.value || userName.value.length < 3) {
+      setUserNameError(true);
+      setUserNameErrorMessage('User name must be at least 3 characters long.');
       isValid = false;
     } else {
-      setNameError(false);
-      setNameErrorMessage('');
+      setUserNameError(false);
+      setUserNameErrorMessage('');
     }
 
     return isValid;
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (nameError || emailError || passwordError) {
+    if (userNameError || emailError || passwordError) {
       event.preventDefault();
       return;
     }
     const data = new FormData(event.currentTarget);
     console.log({
-      name: data.get('name'),
-      lastName: data.get('lastName'),
+      userName: data.get('userName'),
       email: data.get('email'),
       password: data.get('password'),
     });
@@ -130,17 +129,17 @@ export default function SignUp() {
             sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
           >
             <FormControl>
-              <FormLabel htmlFor="name">Full name</FormLabel>
+              <FormLabel htmlFor="name">Username</FormLabel>
               <TextField
-                autoComplete="name"
-                name="name"
+                autoComplete="userName"
+                name="userName"
                 required
                 fullWidth
-                id="name"
-                placeholder="Jon Snow"
-                error={nameError}
-                helperText={nameErrorMessage}
-                color={nameError ? 'error' : 'primary'}
+                id="userName"
+                placeholder="abc"
+                error={userNameError}
+                helperText={userNameErrorMessage}
+                color={userNameError ? 'error' : 'primary'}
               />
             </FormControl>
             <FormControl>
