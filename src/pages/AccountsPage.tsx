@@ -41,7 +41,7 @@ export default function AccountsPage() {
     return (
         <div className="PageLink" id="AccountsPage"> 
             <h1>Accounts</h1>
-            <button onClick={() => initializeLink()} id="startLink">Prepare connection</button>
+            <button onClick={initializeLink} id="startLink">Prepare connection</button>
             <button disabled={!ready} onClick={() => open()} >Connect Bank</button>
         </div>
     );

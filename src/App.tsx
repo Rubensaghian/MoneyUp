@@ -11,12 +11,13 @@ const App: React.FC = () => {
     return (
     <BrowserRouter>
 
-        <nav> 
+        <nav>
             <Link to="/">Home</Link>
             <Link to="/accounts">Accounts</Link>
             <Link to="/budget">Budget</Link>
             <Link to="/cashflow">Cash Flow</Link>
             <Link to="/transactions">Transactions</Link>
+            <Link to="/signup">Sign Up</Link>
         </nav>
 
         <Routes>
@@ -25,6 +26,7 @@ const App: React.FC = () => {
             <Route path="/budget" element={<BudgetPage />} />
             <Route path="/cashflow" element={<CashFlowPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/signup" element={<SignUp.tsx />} />
         </Routes>
 
     </BrowserRouter>
