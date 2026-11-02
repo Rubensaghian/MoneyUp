@@ -32,6 +32,17 @@ export async function getCurrentUser(signal?: AbortSignal): Promise<AuthUser | n
   return response.json() as Promise<AuthUser>;
 }
 
+export async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const response = await fetch(url, { cache: 'no-store', signal });
+  if (!response.ok) {
+    if (response.status === 401) {
+      sessionExpiredListeners.forEach(listener => listener());
+    }
+    throw new Error(await errorMessage(response, 'Could not load the saved details. Please try again.'));
+  }
+  return response.json() as Promise<T>;
+}
+
 export async function postJson<T>(url: string, body?: unknown): Promise<T> {
   // Read a fresh token before every POST, including the first one after login.
   const csrfResponse = await fetch('/api/auth/csrf', { cache: 'no-store' });
