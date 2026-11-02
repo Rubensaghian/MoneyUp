@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -11,6 +12,8 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
+import { postJson } from '../api/client';
 
 const Card = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -55,39 +58,57 @@ const LoginContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function Login() {
-    const [emailError, setEmailError] = React.useState(false);
-    const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
+    const navigate = useNavigate();
+    const [submitError, setSubmitError] = React.useState('');
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [usernameError, setUsernameError] = React.useState(false);
+    const [usernameErrorMessage, setUsernameErrorMessage] = React.useState('');
     const [passwordError, setPasswordError] = React.useState(false);
     const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
+    const [formData, setFormData] = React.useState({
+        username: '',
+        password: '',
+    });
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        if (emailError || passwordError) {
-            event.preventDefault();
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = event.target;
+        setFormData(previous => ({ ...previous, [name]: value }));
+    }
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (isSubmitting) return;
+        setSubmitError('');
+        if (!validateInputs()) {
             return;
         }
-        const data = new FormData(event.currentTarget);
-        console.log({
-            email: data.get('email'),
-            password: data.get('password'),
-        });
+
+        setIsSubmitting(true);
+        try {
+            await postJson('/api/auth/login', formData);
+            navigate('/accounts', { replace: true });
+        } catch (error) {
+            setSubmitError(error instanceof Error ? error.message : 'Could not log in. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const validateInputs = () => {
-        const email = document.getElementById('email') as HTMLInputElement;
-        const password = document.getElementById('password') as HTMLInputElement;
+        const { username, password } = formData;
 
         let isValid = true;
 
-        if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-            setEmailError(true);
-            setEmailErrorMessage('Please enter a valid email address.');
+        if (!username.trim() || username.length < 3 || username.length > 20) {
+            setUsernameError(true);
+            setUsernameErrorMessage('Please enter a valid username.');
             isValid = false;
         } else {
-            setEmailError(false);
-            setEmailErrorMessage('');
+            setUsernameError(false);
+            setUsernameErrorMessage('');
         }
 
-        if (!password.value || password.value.length < 6) {
+        if (!password || password.length < 6) {
             setPasswordError(true);
             setPasswordErrorMessage('Password must be at least 6 characters long.');
             isValid = false;
@@ -122,34 +143,40 @@ export default function Login() {
                             gap: 2,
                         }}
                     >
+                        {submitError && <Alert severity="error">{submitError}</Alert>}
                         <FormControl>
-                            <FormLabel htmlFor="email">Email</FormLabel>
+                            <FormLabel htmlFor="username">Username</FormLabel>
                             <TextField
-                                error={emailError}
-                                helperText={emailErrorMessage}
-                                id="email"
-                                type="email"
-                                name="email"
-                                placeholder="your@email.com"
-                                autoComplete="email"
+                                error={usernameError}
+                                onChange={handleChange}
+                                value={formData.username}
+                                disabled={isSubmitting}
+                                helperText={usernameErrorMessage}
+                                id="username"
+                                type="text"
+                                name="username"
+                                placeholder="username"
+                                autoComplete="username"
                                 autoFocus
                                 required
                                 fullWidth
                                 variant="outlined"
-                                color={emailError ? 'error' : 'primary'}
+                                color={usernameError ? 'error' : 'primary'}
                             />
                         </FormControl>
                         <FormControl>
                             <FormLabel htmlFor="password">Password</FormLabel>
                             <TextField
                                 error={passwordError}
+                                onChange={handleChange}
+                                value={formData.password}
+                                disabled={isSubmitting}
                                 helperText={passwordErrorMessage}
                                 name="password"
                                 placeholder="••••••"
                                 type="password"
                                 id="password"
                                 autoComplete="current-password"
-                                autoFocus
                                 required
                                 fullWidth
                                 variant="outlined"
@@ -160,9 +187,9 @@ export default function Login() {
                             type="submit"
                             fullWidth
                             variant="contained"
-                            onClick={validateInputs}
+                            disabled={isSubmitting}
                         >
-                            Login
+                            {isSubmitting ? 'Logging in…' : 'Login'}
                         </Button>
                     </Box>
                     <Divider>or</Divider>

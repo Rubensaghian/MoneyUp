@@ -1,22 +1,24 @@
 import { useState } from 'react';
 import {usePlaidLink} from "react-plaid-link";
+import { postJson } from '../api/client';
 
 
 export default function AccountsPage() {
     const [linkToken, setLinkToken] = useState<string | null>(null);
+    const [error, setError] = useState('');
+    const [isPreparing, setIsPreparing] = useState(false);
 
     async function initializeLink() {
-        // add path to backend server once routes are made
-        const linkTokenResponse = await fetch("/generate_link_token", {
-            method: "POST",
-        })
-        if (!linkTokenResponse.ok) {
-            throw new Error("Could not find link token");
+        setError('');
+        setIsPreparing(true);
+        try {
+            const data = await postJson<{ link_token: string }>('/generate_link_token');
+            setLinkToken(data.link_token);
+        } catch (error) {
+            setError(error instanceof Error ? error.message : 'Could not prepare the bank connection.');
+        } finally {
+            setIsPreparing(false);
         }
-        const data : { link_token : string } = await linkTokenResponse.json();
-        setLinkToken(data.link_token);
-
-        console.log(JSON.stringify(data.link_token));
     }
 
     const {open, ready} = usePlaidLink({
@@ -25,14 +27,11 @@ export default function AccountsPage() {
         onSuccess: async (publicToken) => {
             if (!publicToken) { return; }
 
-            const response = await fetch("/swap_public_token", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({public_token: publicToken}),
-            });
-
-            if (!response.ok) {
-                throw new Error("Token exchange failed");
+            setError('');
+            try {
+                await postJson('/swap_public_token', { public_token: publicToken });
+            } catch (error) {
+                setError(error instanceof Error ? error.message : 'Could not connect the bank.');
             }
         }
     })
@@ -41,7 +40,10 @@ export default function AccountsPage() {
     return (
         <div className="PageLink" id="AccountsPage"> 
             <h1>Accounts</h1>
-            <button onClick={initializeLink} id="startLink">Prepare connection</button>
+            {error && <p role="alert">{error}</p>}
+            <button disabled={isPreparing} onClick={initializeLink} id="startLink">
+                {isPreparing ? 'Preparing…' : 'Prepare connection'}
+            </button>
             <button disabled={!ready} onClick={() => open()} >Connect Bank</button>
         </div>
     );

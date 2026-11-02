@@ -9,6 +9,9 @@ export default defineConfig({
     proxy: {
       '/generate_link_token': 'http://localhost:8080',
       '/swap_public_token': 'http://localhost:8080',
+      '/api/auth/login': 'http://localhost:8080',
+      '/api/auth/signup': 'http://localhost:8080',
+      '/api/auth/csrf': 'http://localhost:8080',
     }
   }
 })

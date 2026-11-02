@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -10,6 +11,8 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
+import { postJson } from '../api/client';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -54,21 +57,27 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignUp() {
+  const navigate = useNavigate();
+  const [submitError, setSubmitError] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [userNameError, setUserNameError] = React.useState(false);
   const [userNameErrorMessage, setUserNameErrorMessage] = React.useState('');
+  const [formData, setFormData] = React.useState({
+    username: '',
+    email: '',
+    password: '',
+  });
 
   const validateInputs = () => {
-    const email = document.getElementById('email') as HTMLInputElement;
-    const password = document.getElementById('password') as HTMLInputElement;
-    const userName = document.getElementById('userName') as HTMLInputElement;
+    const { email, password, username } = formData;
 
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
       setEmailError(true);
       setEmailErrorMessage('Please enter a valid email address.');
       isValid = false;
@@ -77,7 +86,7 @@ export default function SignUp() {
       setEmailErrorMessage('');
     }
 
-    if (!password.value || password.value.length < 6) {
+    if (!password || password.length < 6) {
       setPasswordError(true);
       setPasswordErrorMessage('Password must be at least 6 characters long.');
       isValid = false;
@@ -86,9 +95,9 @@ export default function SignUp() {
       setPasswordErrorMessage('');
     }
 
-    if (!userName.value || userName.value.length < 3) {
+    if (!username.trim() || username.length < 3 || username.length > 20) {
       setUserNameError(true);
-      setUserNameErrorMessage('User name must be at least 3 characters long.');
+      setUserNameErrorMessage('User name must be between 3 and 20 characters long.');
       isValid = false;
     } else {
       setUserNameError(false);
@@ -98,17 +107,29 @@ export default function SignUp() {
     return isValid;
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (userNameError || emailError || passwordError) {
-      event.preventDefault();
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setFormData(previous => ({ ...previous, [name]: value }));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+    setSubmitError('');
+    if (!validateInputs()) {
       return;
     }
-    const data = new FormData(event.currentTarget);
-    console.log({
-      userName: data.get('userName'),
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+
+    setIsSubmitting(true);
+    try {
+      // Signup now creates the account and authenticates the session on the server.
+      await postJson('/api/auth/signup', formData);
+      navigate('/accounts', { replace: true });
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Could not sign up. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -126,18 +147,23 @@ export default function SignUp() {
           <Box
             component="form"
             onSubmit={handleSubmit}
+            noValidate
             sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
           >
+            {submitError && <Alert severity="error">{submitError}</Alert>}
             <FormControl>
-              <FormLabel htmlFor="name">Username</FormLabel>
+              <FormLabel htmlFor="username">Username</FormLabel>
               <TextField
-                autoComplete="userName"
-                name="userName"
+                autoComplete="username"
+                name="username"
                 required
                 fullWidth
-                id="userName"
+                id="username"
                 placeholder="abc"
                 error={userNameError}
+                onChange={handleChange}
+                value={formData.username}
+                disabled={isSubmitting}
                 helperText={userNameErrorMessage}
                 color={userNameError ? 'error' : 'primary'}
               />
@@ -148,13 +174,17 @@ export default function SignUp() {
                 required
                 fullWidth
                 id="email"
+                type="email"
                 placeholder="your@email.com"
                 name="email"
                 autoComplete="email"
                 variant="outlined"
                 error={emailError}
+                onChange={handleChange}
+                value={formData.email}
+                disabled={isSubmitting}
                 helperText={emailErrorMessage}
-                color={passwordError ? 'error' : 'primary'}
+                color={emailError ? 'error' : 'primary'}
               />
             </FormControl>
             <FormControl>
@@ -169,6 +199,9 @@ export default function SignUp() {
                 autoComplete="new-password"
                 variant="outlined"
                 error={passwordError}
+                onChange={handleChange}
+                value={formData.password}
+                disabled={isSubmitting}
                 helperText={passwordErrorMessage}
                 color={passwordError ? 'error' : 'primary'}
               />
@@ -177,9 +210,9 @@ export default function SignUp() {
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              disabled={isSubmitting}
             >
-              Sign up
+              {isSubmitting ? 'Creating account…' : 'Sign up'}
             </Button>
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
