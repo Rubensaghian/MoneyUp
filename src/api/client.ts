@@ -3,6 +3,17 @@ type CsrfToken = {
   token: string;
 };
 
+export type AuthUser = {
+  username: string;
+};
+
+const sessionExpiredListeners = new Set<() => void>();
+
+export function onSessionExpired(listener: () => void): () => void {
+  sessionExpiredListeners.add(listener);
+  return () => { sessionExpiredListeners.delete(listener); };
+}
+
 async function errorMessage(response: Response, fallback: string): Promise<string> {
   try {
     const error: { message?: unknown } = await response.json();
@@ -10,6 +21,15 @@ async function errorMessage(response: Response, fallback: string): Promise<strin
   } catch {
     return fallback;
   }
+}
+
+export async function getCurrentUser(signal?: AbortSignal): Promise<AuthUser | null> {
+  const response = await fetch('/api/me', { cache: 'no-store', signal });
+  if (response.status === 401) return null;
+  if (!response.ok) {
+    throw new Error(await errorMessage(response, 'Could not check your session. Please try again.'));
+  }
+  return response.json() as Promise<AuthUser>;
 }
 
 export async function postJson<T>(url: string, body?: unknown): Promise<T> {
@@ -30,8 +50,12 @@ export async function postJson<T>(url: string, body?: unknown): Promise<T> {
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      sessionExpiredListeners.forEach(listener => listener());
+    }
     throw new Error(await errorMessage(response, 'The request failed. Please try again.'));
   }
 
+  if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }

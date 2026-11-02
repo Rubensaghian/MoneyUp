@@ -12,7 +12,7 @@ import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
-import { postJson } from '../api/client';
+import { useAuth } from '../auth/AuthContext';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -58,6 +58,7 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [submitError, setSubmitError] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [emailError, setEmailError] = React.useState(false);
@@ -123,7 +124,7 @@ export default function SignUp() {
     setIsSubmitting(true);
     try {
       // Signup now creates the account and authenticates the session on the server.
-      await postJson('/api/auth/signup', formData);
+      await signUp(formData);
       navigate('/accounts', { replace: true });
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Could not sign up. Please try again.');

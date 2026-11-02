@@ -12,8 +12,8 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
-import { postJson } from '../api/client';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 
 const Card = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -59,6 +59,8 @@ const LoginContainer = styled(Stack)(({ theme }) => ({
 
 export default function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { signIn } = useAuth();
     const [submitError, setSubmitError] = React.useState('');
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [usernameError, setUsernameError] = React.useState(false);
@@ -85,8 +87,11 @@ export default function Login() {
 
         setIsSubmitting(true);
         try {
-            await postJson('/api/auth/login', formData);
-            navigate('/accounts', { replace: true });
+            await signIn(formData);
+            const from: unknown = location.state?.from;
+            const destination = typeof from === 'string' && from.startsWith('/') && !from.startsWith('//')
+                ? from : '/accounts';
+            navigate(destination, { replace: true });
         } catch (error) {
             setSubmitError(error instanceof Error ? error.message : 'Could not log in. Please try again.');
         } finally {
