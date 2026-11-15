@@ -43,8 +43,8 @@ export async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> 
   return response.json() as Promise<T>;
 }
 
-export async function postJson<T>(url: string, body?: unknown): Promise<T> {
-  // Read a fresh token before every POST, including the first one after login.
+async function sendJson<T>(method: 'POST' | 'PUT' | 'DELETE', url: string, body?: unknown): Promise<T> {
+  // Read a fresh token before every mutation, including the first one after login.
   const csrfResponse = await fetch('/api/auth/csrf', { cache: 'no-store' });
   if (!csrfResponse.ok) {
     throw new Error(await errorMessage(csrfResponse, 'Could not prepare the request. Please try again.'));
@@ -52,7 +52,7 @@ export async function postJson<T>(url: string, body?: unknown): Promise<T> {
   const csrf: CsrfToken = await csrfResponse.json();
 
   const response = await fetch(url, {
-    method: 'POST',
+    method,
     headers: {
       'Content-Type': 'application/json',
       [csrf.headerName]: csrf.token,
@@ -69,4 +69,16 @@ export async function postJson<T>(url: string, body?: unknown): Promise<T> {
 
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+export function postJson<T>(url: string, body?: unknown): Promise<T> {
+  return sendJson<T>('POST', url, body);
+}
+
+export function putJson<T>(url: string, body: unknown): Promise<T> {
+  return sendJson<T>('PUT', url, body);
+}
+
+export function deleteJson(url: string): Promise<void> {
+  return sendJson<void>('DELETE', url);
 }
