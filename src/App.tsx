@@ -1,4 +1,5 @@
 import React from 'react';
+import CssBaseline from '@mui/material/CssBaseline';
 
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import AuthProvider from './auth/AuthProvider';
@@ -16,6 +17,7 @@ const App: React.FC = () => {
     return (
     <BrowserRouter>
       <AuthProvider>
+        <CssBaseline enableColorScheme />
         <Navigation />
         <Routes>
             <Route path="/" element={<MainPage />} />
