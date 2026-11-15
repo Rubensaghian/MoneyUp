@@ -1,5 +1,10 @@
 import { getJson, postJson } from './client';
 
+export type ConnectionSetupResponse = {
+  connection_id: string;
+  initialized: boolean;
+};
+
 export type BankAccount = {
   id: string;
   name: string;

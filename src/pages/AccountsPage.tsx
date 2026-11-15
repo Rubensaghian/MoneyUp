@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { usePlaidLink } from 'react-plaid-link';
 import { postJson } from '../api/client';
 import { getAccounts, refreshAccounts } from '../api/accounts';
-import type { BankConnection } from '../api/accounts';
+import type { BankConnection, ConnectionSetupResponse } from '../api/accounts';
 
 function formatBalance(value: number | null, currency: string | null): string {
     if (value === null) return 'Unavailable';
@@ -82,12 +82,17 @@ export default function AccountsPage() {
         setError('');
         setIsSaving(true);
         try {
-            await postJson<{ connection_id: string }>('/swap_public_token', { public_token: publicToken });
+            const result = await postJson<ConnectionSetupResponse>('/swap_public_token', { public_token: publicToken });
+            const initializationMessage = result.initialized
+                ? ''
+                : 'Bank linked, but some account or transaction data could not be loaded.';
+            setError(initializationMessage);
+
             try {
-                setConnections(await refreshAccounts());
+                setConnections(await getAccounts());
             } catch (error) {
-                const message = error instanceof Error ? error.message : 'Please refresh your accounts.';
-                setError('Bank linked, but account details could not be refreshed. ' + message);
+                const message = error instanceof Error ? error.message : 'Please reload the page.';
+                setError((initializationMessage || 'Bank linked.') + ' Saved accounts could not be displayed. ' + message);
                 await reloadSavedAccounts();
             }
         } catch (error) {
